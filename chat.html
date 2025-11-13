@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💬 Real-Time Chat App</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .chat-container {
+        width: 95%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .chat-header {
+        background: #0078ff;
+        color: white;
+        padding: 12px;
+        font-weight: bold;
+        text-align: center;
+      }
+      .chat-box {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+      }
+      .msg {
+        background: #f1f1f1;
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin: 5px 0;
+        max-width: 75%;
+      }
+      .self {
+        background: #dcf8c6;
+        align-self: flex-end;
+      }
+      .chat-input {
+        display: flex;
+        border-top: 1px solid #ddd;
+      }
+      .chat-input input {
+        flex: 1;
+        border: none;
+        padding: 10px;
+        font-size: 15px;
+        outline: none;
+      }
+      .chat-input button {
+        background: #0078ff;
+        color: white;
+        border: none;
+        padding: 0 15px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .chat-input button:hover {
+        background: #005fcc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-header">💬 Real-Time Chat</div>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input">
+        <input type="text" id="messageInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <script>
+      // Connect to WebSocket server
+      const ws = new WebSocket("ws://localhost:8080");
+
+      const chatBox = document.getElementById("chatBox");
+      const input = document.getElementById("messageInput");
+
+      // Handle incoming messages
+      ws.onmessage = async (event) => {
+        let text = event.data;
+
+        // Convert Blob to text (fixes [object Blob] issue)
+        if (text instanceof Blob) {
+          text = await text.text();
+        }
+
+        const msg = document.createElement("div");
+        msg.classList.add("msg");
+        msg.textContent = text;
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      };
+
+      // Send message to server
+      function sendMessage() {
+        const text = input.value.trim();
+        if (text !== "" && ws.readyState === WebSocket.OPEN) {
+          ws.send(text);
+
+          // Display own message in chat box
+          const msg = document.createElement("div");
+          msg.classList.add("msg", "self");
+          msg.textContent = text;
+          chatBox.appendChild(msg);
+          chatBox.scrollTop = chatBox.scrollHeight;
+
+          input.value = "";
+        }
+      }
+
+      // Press Enter to send
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
+  </body>
+</html>
